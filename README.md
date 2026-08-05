@@ -10,6 +10,9 @@ Kairo is a fully autonomous trading bot that uses **5 deterministic strategies +
 
 **The LLM can VETO trades but can NEVER force one.** Every order passes through a hardcoded gate that no agent can override. This is the core safety philosophy.
 
+## Note:
+its not perfect and need more help mkaing it perfect , hope the internet help me ;) ty and im a total newbie in this feild. wish u luck stranger on the internet 
+
 ## Design Philosophy
 
 | Principle | Implementation |
