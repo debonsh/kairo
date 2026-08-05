@@ -1,0 +1,89 @@
+# Top crypto pairs by liquidity and volume
+# The bot only trades coins in this list
+# Minimum criteria: >$500M 24h volume, listed on both Binance and Bybit
+
+coins:
+  - symbol: BTC/USDT
+    name: Bitcoin
+    category: layer1
+    min_volume_24h_usd: 500000000
+
+  - symbol: ETH/USDT
+    name: Ethereum
+    category: layer1
+    min_volume_24h_usd: 500000000
+
+  - symbol: SOL/USDT
+    name: Solana
+    category: layer1
+    min_volume_24h_usd: 200000000
+
+  - symbol: BNB/USDT
+    name: Binance Coin
+    category: exchange_token
+    min_volume_24h_usd: 100000000
+
+  - symbol: XRP/USDT
+    name: Ripple
+    category: payment
+    min_volume_24h_usd: 100000000
+
+  - symbol: DOGE/USDT
+    name: Dogecoin
+    category: meme
+    min_volume_24h_usd: 100000000
+
+  - symbol: ADA/USDT
+    name: Cardano
+    category: layer1
+    min_volume_24h_usd: 50000000
+
+  - symbol: AVAX/USDT
+    name: Avalanche
+    category: layer1
+    min_volume_24h_usd: 50000000
+
+  - symbol: DOT/USDT
+    name: Polkadot
+    category: layer1
+    min_volume_24h_usd: 50000000
+
+  - symbol: ARB/USDT
+    name: Arbitrum
+    category: l2
+    min_volume_24h_usd: 30000000
+
+  - symbol: OP/USDT
+    name: Optimism
+    category: l2
+    min_volume_24h_usd: 30000000
+
+  - symbol: SUI/USDT
+    name: Sui
+    category: layer1
+    min_volume_24h_usd: 30000000
+
+  - symbol: FET/USDT
+    name: Fetch.ai
+    category: ai
+    min_volume_24h_usd: 30000000
+
+  - symbol: RENDER/USDT
+    name: Render
+    category: ai
+    min_volume_24h_usd: 30000000
+
+  - symbol: TIA/USDT
+    name: Celestia
+    category: modular
+    min_volume_24h_usd: 30000000
+
+  - symbol: SEI/USDT
+    name: Sei
+    category: layer1
+    min_volume_24h_usd: 20000000
+
+  - symbol: PEPE/USDT
+    name: Pepe
+    category: meme
+    min_volume_24h_usd: 20000000

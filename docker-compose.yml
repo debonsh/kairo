@@ -1,0 +1,21 @@
+services:
+  kairo:
+    build: .
+    container_name: kairo
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Ollama runs on the host machine — reach it from the container
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LLM_REALTIME_PROVIDER=ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    mem_limit: 2g
+    cpus: 2

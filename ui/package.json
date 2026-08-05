@@ -1,0 +1,21 @@
+{
+  "name": "kairo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "KAIRO — Autonomous AI Trading Operating System. Design system per KAIRO-DESIGN-RFC-001.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @kairo/terminal",
+    "build": "npm run build -w @kairo/terminal",
+    "start": "npm run start -w @kairo/terminal",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "tokens:build": "npm run build -w @kairo/tokens",
+    "font:build": "python ../scripts/gen_kairo_dot.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

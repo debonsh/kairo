@@ -1,0 +1,172 @@
+# ============================================================
+# Kairo — Master Configuration
+# ============================================================
+
+bot_name: Kairo
+
+exchanges:
+  primary: bybit
+  secondary: binance
+  testnet: true
+
+seeding:
+  seed_paper_trades: true     # populate the empty paper journal once (first boot)
+  paper_trade_count: 14       # how many simulated round trips to seed
+
+trading:
+  mode: paper
+  cycle_seconds: 120
+  max_concurrent_positions: 5
+  info_bars:
+    enabled: true            # fold live 15m candles into info bars + use for signal block
+    bar_type: volume         # volume | dollar | tick | cusum
+    volume_bars_per_day: 100 # expected bars/day for threshold estimation
+  allowed_coins:
+    - BTC/USDT
+    - ETH/USDT
+    - SOL/USDT
+    - BNB/USDT
+    - XRP/USDT
+    - DOGE/USDT
+    - ADA/USDT
+    - AVAX/USDT
+    - DOT/USDT
+    - ARB/USDT
+    - OP/USDT
+    - SUI/USDT
+    - FET/USDT
+    - RENDER/USDT
+    - TIA/USDT
+    - SEI/USDT
+    - PEPE/USDT
+  timeframes:
+    - 15m
+    - 1h
+    - 4h
+    - 1d
+
+risk:
+  max_position_pct: 2.0
+  stop_loss_pct: 1.5
+  take_profit_pct: 3.0
+  max_daily_loss_pct: 5.0
+  max_total_drawdown_pct: 10.0
+  balance_floor: 2500
+  volatility_pause_pct: 5.0
+  min_risk_reward_ratio: 1.5
+  correlation_max: 0.85
+  vol_target_risk_pct: 0.01      # 1% of account at risk per trade
+  kelly_fraction: 0.25            # 1/4 Kelly
+  min_order_usdt: 5.0
+  vol_ewma_alpha: 0.3             # EWMA volatility forecast smoothing (0-1)
+
+llm:
+  realtime_provider: ollama       # ollama | commandcode | groq | openai | deepseek
+  research_provider: commandcode  # commandcode | deepseek | openai
+  ollama_model: qwen3:8b
+  ollama_base_url: http://localhost:11434
+  commandcode_model: deepseek-v4-pro
+  temperature: 0.3
+  max_tokens: 512
+  fallback_to_rules: true
+
+backtest:
+  default_start: "2024-01-01"
+  default_timeframe: 15m
+  commission_pct: 0.1
+  slippage_pct: 0.05
+  walkforward_windows: 3
+  min_trades_required: 30
+  meta_label_min_samples: 100
+
+monitor:
+  telegram_alerts: true
+  daily_summary_time: "22:00"    # IST
+  heartbeat_interval_hours: 6
+  fast_watchdog_seconds: 30
+  stall_threshold_seconds: 600     # 10 min — cycle takes 90-200s w/ LLM
+  dashboard_port: 8501
+  api_port: 8000
+
+learning:
+  min_trades_for_calibration: 20
+  scorecard_window: 50
+  strategy_weight_decay: 0.95
+  confidence_threshold: 0.55
+  shadow_min_cycles: 50
+  sharpe_drift_de_risk: 0.5      # auto-de-risk threshold
+  sharpe_drift_emergency: 1.0     # emergency pause threshold
+
+fees:
+  bybit:
+    spot_maker: 0.0008
+    spot_taker: 0.001
+  binance:
+    spot_maker: 0.00075
+    spot_taker: 0.001
+
+tax:
+  country: india
+  crypto_gains_tax_pct: 30.0
+  tds_pct: 1.0
+  tds_threshold_inr: 10000
+  note: "30% flat tax on gains. 1% TDS per transaction > ₹10K. Losses cannot offset gains."
+
+regime:
+  adx_trend_threshold: 25.0
+  vol_percentile_threshold: 80.0
+  vol_lookback: 20
+
+news:
+  rss_sources:
+    - url: "https://cryptopanic.com/posts/index.rss"
+      name: cryptopanic
+    - url: "https://cointelegraph.com/rss"
+      name: cointelegraph
+    - url: "https://www.coindesk.com/arc/outboundfeeds/rss/"
+      name: coindesk
+  refresh_seconds: 120
+  max_headlines: 15
+
+futures_gate:
+  min_trades: 50
+  max_sharpe_drift: 0.5
+  min_win_rate: 0.40
+  max_drawdown_pct: 10.0
+  min_consecutive_profitable_days: 5
+
+derivatives:
+  enabled: true
+  funding_crowd_annualized_pct: 30.0   # block LONGs when funding > +30% annualized (crowded longs)
+  oi_divergence_size_mult: 0.75        # size multiplier when OI falls while price rises (weak rally)
+  cache_seconds: 300
+
+# Roadmap P1.1 — market making execution path (separate from the directional
+# ensemble; own risk rules live in risk_rules.yaml `market_making` section).
+market_making:
+  enabled: false          # OFF by default — operator opts in (paper-first)
+  symbols: []             # empty = same as trading.allowed_coins (first N)
+  quote_size_usdt: 100.0
+
+# Roadmap P1.2 — triangular arbitrage (single-exchange 3-leg loops)
+triangular_arb:
+  enabled: false          # OFF by default — detection + paper execution
+  min_order_usdt: 20.0
+
+# Roadmap P2.1 — joint position sizing (cvxpy); auto-falls back to per-signal
+joint_sizing:
+  enabled: true
+  max_single_pct: 0.25    # max weight any one position can take in the optimizer
+
+# Roadmap P2.2 — fill validation simulation for SpreadOptimizer
+fill_validation:
+  latency_ms: 200
+  offsets_pct: [0.05, 0.1, 0.2, 0.3, 0.5]
+
+reliability:
+  api_error_pause_threshold: 5         # consecutive exchange API errors before auto-pause
+  reconcile_minutes: 30                # how often to reconcile exchange state vs local DB
+  healthchecks_url: ""                 # external dead-man's switch, e.g. https://hc-ping.com/<uuid>
+  healthchecks_interval_minutes: 10
+  backup_on_startup: true
+  backup_interval_hours: 24

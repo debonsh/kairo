@@ -1,0 +1,146 @@
+# ============================================================
+# ABSOLUTE RISK RULES — IMMUTABLE BY LLM
+# These are enforced in code at the gate level.
+# No prompt, no agent, no LLM can override these values.
+#
+# The top-level keys below are the VANILLA (conservative) defaults.
+# The `profiles:` section defines runtime mode profiles that are
+# deep-merged over the base by src/config/state_manager.py.
+# Mode switching is hot (zero restarts) via /mode, /aggressive,
+# /vanilla or the dashboard toggle.
+# ============================================================
+
+# === Pre-Trade Gates ===
+pre_trade:
+  max_position_pct: 2.0           # % of portfolio per single position
+  min_confidence: 0.55            # below this, signal is rejected (floor)
+  max_correlation_to_existing: 0.85  # reject if too correlated with open positions
+  require_multi_tf_agreement: true   # 15m, 1h, 4h, 1d must mostly agree
+  min_volume_24h_usd: 20000000    # don't trade illiquid coins
+  volatility_max_pct: 5.0         # reject if 15-min volatility exceeds this
+  fee_check: true                 # reject if expected gain < fees * 1.5
+  min_risk_reward_ratio: 1.5      # minimum TP/SL payout ratio
+
+# === Position Management ===
+position:
+  hard_stop_loss_pct: 1.5         # hard exit at this loss
+  take_profit_pct: 3.0            # hard exit at this profit
+  trailing_stop_activation_pct: 1.0  # activate trailing when profit reaches this
+  trailing_stop_distance_pct: 0.5    # trailing stop distance
+  max_hold_time_hours: 48         # force close if held longer than this
+  max_positions_total: 5          # global cap
+
+# === Account-Level Protection ===
+account:
+  max_daily_loss_pct: 5.0         # bot pauses for 24h if daily loss exceeds
+  max_total_drawdown_pct: 10.0    # bot shuts down until human restart
+  balance_floor: 2500             # never risk below this (INR/USDT eq.)
+  daily_trade_limit: 20           # max trades per day
+  cooldown_after_loss_minutes: 30 # wait after a loss before next trade
+
+# === Emergency Kill Switch ===
+emergency:
+  telegram_stop_command: "/stop"  # instantly closes all, goes idle
+  telegram_pause_command: "/pause"
+  telegram_resume_command: "/resume"
+  auto_pause_on_daily_loss: true
+  auto_shutdown_on_drawdown: true
+
+# === Position Sizing Engine (Half-Kelly + Volatility Targeting) ===
+# Spec §2: f* = max(0, (p·(b+1) − 1) / b), allocated = min(kelly_fraction·f*, max_position_pct)
+#   p = meta-labeler confidence (floor meta_min_probability)
+#   b = payout ratio = TP distance / SL distance (from live SL/TP, fallback tp/sl multipliers)
+# Vol-adjusted size = (Capital × vol_target_risk_pct) / (ATR × sl_atr_multiplier)
+# Final size = min(vol_adj, kelly_size, max_position_pct) × M_regime
+sizing:
+  kelly_fraction: 0.25            # vanilla = quarter-Kelly; aggressive = 0.50 (Half-Kelly)
+  vol_target_risk_pct: 0.01       # fraction of account at risk per trade (1%)
+  sl_atr_multiplier: 2.0          # stop distance in ATR units (denominator of vol-target size)
+  tp_atr_multiplier: 4.0          # profit target in ATR units (→ 2:1 payout in vanilla)
+  meta_min_probability: 0.55      # meta-labeler p floor for Kelly (spec: p ≥ 0.55)
+  min_sl_pct: 0.015               # SL floor — preserves fixed 1.5% on quiet coins (vanilla legacy behavior)
+  min_tp_pct: 0.03                # TP floor — preserves fixed 3.0% (vanilla legacy behavior)
+  conviction_scale: 0.0           # meta-confidence size scaling (vanilla: off)
+  conviction_max_mult: 1.5        # hard cap on the conviction multiplier
+
+# === Market Making Risk Rules (roadmap P1.1) ===
+# Market making is a SEPARATE execution path from the directional ensemble.
+# Its risk is adverse selection + inventory skew, not directional exposure —
+# so it has its own limits (max inventory skew, not SL/TP). These are read
+# live by src/execution/market_maker.py via the state manager.
+market_making:
+  spread_pct: 0.0015            # half-spread around mid per side
+  min_spread_pct: 0.0005        # never quote tighter than this
+  quote_size_usdt: 100.0        # notional quoted per side
+  max_inventory_usdt: 500.0     # hard cap — stop quoting entirely past this
+  max_inventory_skew_pct: 0.5   # stop adding to the skew side at 50% of cap
+  max_inventory_to_quote_pct: 0.8  # quote ratio when skewed
+
+# === Regime Multipliers (ADX/Vol-derived position scalers) ===
+# M_regime scales final position size by detected market state.
+regime_multipliers:
+  strong_trend: 1.0
+  weak_trend: 1.0
+  choppy: 1.0
+  high_vol: 0.5                   # shrink into high volatility — always
+  mean_reverting: 1.0
+
+# === Micro-Capital Scale-Up ===
+# For small accounts, the flat % cap can push orders below exchange minimums
+# (a $100 account at 2% = $2). Scale the effective position % up so orders
+# stay meaningful, while USD risk stays bounded by the sizing engine above.
+micro_capital:
+  enabled: true
+  balance_threshold: 2000         # accounts below this get scaled-up effective %
+  max_position_pct: 20.0          # hard ceiling on the scaled-up %
+  min_meaningful_order_usdt: 5.0  # target order value to stay above exchange min
+  balance_floor: 50.0             # absolute floor for micro accounts (dust protection)
+
+# === Regime Detection Thresholds (overridable per profile) ===
+regime:
+  adx_trend_threshold: 25.0
+  vol_percentile_threshold: 80.0
+  vol_lookback: 20
+
+# ============================================================
+# RUNTIME PROFILES — deep-merged over the base above.
+# `vanilla` is intentionally empty: base == conservative.
+# `aggressive` = high-conviction acceleration (spec Phase 3).
+# ============================================================
+profiles:
+  vanilla: {}
+
+  aggressive:
+    pre_trade:
+      max_position_pct: 5.0       # scale positions up on multi-factor alignment
+      min_confidence: 0.55        # floor stays 0.55 — conviction, not recklessness
+      min_risk_reward_ratio: 2.0  # require ≥ 2:1 payout (3:1 barriers give headroom)
+    position:
+      hard_stop_loss_pct: 1.0     # tighter hard stop
+      take_profit_pct: 3.0
+    sizing:
+      kelly_fraction: 0.5         # Half-Kelly (spec §2.1)
+      vol_target_risk_pct: 0.015  # 1.5% of account at risk per trade
+      sl_atr_multiplier: 1.0      # tight stop: 1.0 × ATR (spec §3.1)
+      tp_atr_multiplier: 3.0      # profit target: 3.0 × ATR → asymmetric 3:1
+      meta_min_probability: 0.55
+      min_sl_pct: 0.005           # tight SL floor (0.5%) — ATR stops stay tight
+      min_tp_pct: 0.015           # TP floor (1.5%)
+      conviction_scale: 0.5       # size scales with meta confidence: 1 + 0.5·(p−0.55)/0.45
+      conviction_max_mult: 1.5    # conviction multiplier never exceeds 1.5×
+    regime_multipliers:
+      strong_trend: 1.5           # press winners in trends (cap × 1.5 = 7.5%)
+      weak_trend: 1.2
+      choppy: 0.6                 # fade choppy tape harder
+      high_vol: 0.35              # near-stand down in panic
+      mean_reverting: 1.0
+    micro_capital:
+      enabled: true
+      balance_threshold: 5000     # scale up small accounts more aggressively
+      max_position_pct: 25.0
+      min_meaningful_order_usdt: 5.0
+      balance_floor: 50.0
+    regime:
+      adx_trend_threshold: 22.0   # catch trends slightly earlier
+      vol_percentile_threshold: 80.0
+      vol_lookback: 20

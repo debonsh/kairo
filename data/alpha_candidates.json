@@ -1,0 +1,38 @@
+[
+  {
+    "name": "alpha_rsi_oversold_AND_bb_lower_contrarian",
+    "sharpe": -11.767,
+    "total_return_pct": -1.91,
+    "trades": 13,
+    "win_rate": 18.4,
+    "p1": "rsi_oversold",
+    "p2": "bb_lower",
+    "op": "AND",
+    "direction": "contrarian",
+    "symbols": 3
+  },
+  {
+    "name": "alpha_bb_lower_AND_rsi_oversold_short",
+    "sharpe": -11.767,
+    "total_return_pct": -1.91,
+    "trades": 13,
+    "win_rate": 18.4,
+    "p1": "bb_lower",
+    "p2": "rsi_oversold",
+    "op": "AND",
+    "direction": "short",
+    "symbols": 3
+  },
+  {
+    "name": "alpha_close_above_sma_OR_volume_spike_contrarian",
+    "sharpe": -12.157,
+    "total_return_pct": -10.25,
+    "trades": 65,
+    "win_rate": 32.4,
+    "p1": "close_above_sma",
+    "p2": "volume_spike",
+    "op": "OR",
+    "direction": "contrarian",
+    "symbols": 3
+  }
+]

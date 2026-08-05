@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+data/
+logs/
+reports/
+.env
+.git/
+.gitignore
+.idea/
+.vscode/
+*.db
+*.duckdb
+*.wal
